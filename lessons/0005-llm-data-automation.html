@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 5: 大模型赋能数据工作 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav"><a href="../README.md">← 首页</a> | 第5/7课 | <span style="color:#6ec6d8">71%</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:71%"></div></div>
+
+<h1>🤖 Lesson 5: 大模型赋能数据工作</h1>
+<p style="color:#b0b0c0">来源: AWS Text2SQL Best Practices, LlamaIndex PandasQueryEngine, Google BigQuery NL2SQL, arXiv NL2SQL Survey 2024</p>
+
+<blockquote>💡 <strong>核心洞察</strong>：JD 写「大模型赋能数据管理」不是让你训练模型，是让你<strong>用 LLM 让数据工作自动化</strong>——自然语言查数据、AI 写分析报告、智能数据清洗。这是你面试中最强的差异化武器。</blockquote>
+
+<h2>1. NL2SQL — 自然语言转 SQL（来源：AWS 官方博客）</h2>
+<p>这是大模型在数据领域最成熟的应用。AWS 总结了完整的最佳实践：</p>
+
+<h3>核心流程三步</h3>
+<div class="card">
+  <p><strong>① 自然语言理解</strong> — 解析用户输入，提取关键要素（要查什么表？什么字段？什么条件？）</p>
+  <p><strong>② SQL 生成</strong> — LLM 将结构化意图转为可执行 SQL</p>
+  <p><strong>③ 数据库查询</strong> — 执行 SQL，取回结果，返回给用户</p>
+</div>
+
+<h3>Prompt Engineering 核心（来源：AWS 最佳实践）</h3>
+<pre><code>-- Prompt 模板：告诉 LLM 你要 SQL
+/*
+给定以下数据库 schema：
+CREATE TABLE orders (
+  order_id INT,
+  user_id INT,
+  amount DECIMAL,
+  order_time TIMESTAMP
+);
+CREATE TABLE users (
+  user_id INT,
+  name TEXT,
+  region TEXT
+);
+
+请回答以下问题，生成 MySQL 查询：
+"上月华东区各品类销售额排名"
+*/
+
+SELECT 
+  u.region,
+  DATE_FORMAT(o.order_time, '%Y-%m') AS month,
+  SUM(o.amount) AS total_sales
+FROM orders o
+JOIN users u ON o.user_id = u.user_id
+WHERE u.region = '华东'
+  AND o.order_time >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+GROUP BY u.region, month
+ORDER BY total_sales DESC;</code></pre>
+
+<h3>AWS 核心建议</h3>
+<table class="takeaways">
+  <tr><td>先 Prompt 后微调</td><td>先用精心设计的 Prompt 驱动基础模型。只有 Prompt 不够时才考虑微调（需要大量标注数据）</td></tr>
+  <tr><td>Few-shot 示例</td><td>Prompt 里放 2-3 组「自然语言→SQL」对照，模型能学得更准</td></tr>
+  <tr><td>RAG 增强</td><td>检索最相似的 Text2SQL 示例注入 Prompt，提升生成准确度</td></tr>
+  <tr><td>Schema 上下文</td><td>必须在 Prompt 中提供完整的表结构和字段说明</td></tr>
+</table>
+
+<h2>2. AI 自动分析报告</h2>
+<p>第二个核心场景：把数据扔给 LLM，让它自动生成分析报告。</p>
+
+<pre><code># 用 LLM 自动生成数据分析报告
+import openai  # 或 deepseek / qwen
+
+data_summary = f"""
+GMV: 1,250万 (环比+8.2%)
+订单数: 3.4万 (环比+5.1%)
+客单价: ¥368 (环比+3.0%)
+退货率: 2.1% (环比-0.3pp)
+Top品类: 服装(+15%), 食品(+3%), 数码(-5%)
+"""
+
+prompt = f"""你是一名资深数据分析师。以下是本月业务数据摘要：
+
+{data_summary}
+
+请撰写一份 200 字以内的业务分析报告，包含：
+1. 总体表现评价
+2. 值得关注的异常点
+3. 下月行动建议
+"""
+
+response = openai.chat.completions.create(
+    model="deepseek-chat",
+    messages=[{"role":"user","content":prompt}]
+)
+print(response.choices[0].message.content)</code></pre>
+
+<h2>3. 智能数据清洗</h2>
+<pre><code># 让 LLM 识别并处理脏数据
+prompt = """
+以下是产品销售数据的质量问题，请生成 pandas 清洗代码：
+- product_name 列有前后空格和全角字符
+- price 列有 ¥ 符号和 "元" 后缀
+- date 列格式不统一（有的 YYYY-MM-DD，有的 YYYY/MM/DD）
+
+只输出可运行的 Python 代码。
+"""
+
+# LLM 会生成：
+# df['product_name'] = df['product_name'].str.strip().str.replace('　','')
+# df['price'] = df['price'].str.replace('[¥元]','',regex=True).astype(float)
+# df['date'] = pd.to_datetime(df['date'], format='mixed')</code></pre>
+
+<h2>🧪 测验</h2>
+<div class="quiz" id="q1"><h3>Q1: NL2SQL 实现策略（来源：AWS）</h3><p class="question">用 LLM 实现自然语言转 SQL，AWS 建议的起步策略是？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q1',this,'A')">A. 直接用微调过的模型</button>
+<button class="quiz-option" onclick="cq('q1',this,'B')">B. 先用 Prompt Engineering，不够再微调</button>
+<button class="quiz-option" onclick="cq('q1',this,'C')">C. 从头训练一个专用模型</button>
+<button class="quiz-option" onclick="cq('q1',this,'D')">D. 用规则引擎匹配关键词</button></div>
+<div class="quiz-feedback" id="q1-fb"></div></div>
+
+<div class="quiz" id="q2"><h3>Q2: Prompt 设计</h3><p class="question">让 LLM 生成 SQL，Prompt 中最关键的信息是什么？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q2',this,'A')">A. 公司业务背景描述</button>
+<button class="quiz-option" onclick="cq('q2',this,'B')">B. 数据库 Schema + 2-3 个示例</button>
+<button class="quiz-option" onclick="cq('q2',this,'C')">C. LLM 的能力说明</button>
+<button class="quiz-option" onclick="cq('q2',this,'D')">D. 数据库历史查询记录</button></div>
+<div class="quiz-feedback" id="q2-fb"></div></div>
+
+<h2>📌 关键收获</h2>
+<table class="takeaways">
+<tr><td>NL2SQL 三步</td><td>NL→SQL→执行→结果。2024 年 arXiv 综述指出 LLM 已大幅提升 NL2SQL 准确率</td></tr>
+<tr><td>Prompt > 微调</td><td>AWS 最佳实践：先用 Few-shot Prompt + Schema + RAG，不够再微调</td></tr>
+<tr><td>自动报告</td><td>数据摘要 + 分析指令 → LLM → 结构化报告。1 小时变 1 分钟</td></tr>
+<tr><td>面试武器</td><td>NL2SQL 原型可以直接 demo——「我说需求，AI 生成 SQL 并执行」，面试官会记住你</td></tr>
+</table>
+
+<div class="ext-reading"><h3>📚 延伸阅读</h3><ul>
+<li><a href="https://aws.amazon.com/blogs/machine-learning/generating-value-from-enterprise-data-best-practices-for-text2sql-and-generative-ai/" target="_blank">AWS: Text2SQL Best Practices</a> <span class="source-note">— 权威 Prompt 工程指南</span></li>
+<li><a href="https://arxiv.org/html/2408.05109v4" target="_blank">arXiv: NL2SQL Survey 2024</a> <span class="source-note">— 学术综述，了解技术边界</span></li>
+<li><a href="https://cloud.google.com/blog/products/data-analytics/nl2sql-with-bigquery-and-gemini" target="_blank">Google Cloud: NL2SQL with BigQuery + Gemini</a></li>
+<li><a href="https://blogs.oracle.com/ai-and-datascience/prompt-engineering-natural-language-sql-llama2" target="_blank">Oracle: NL2SQL with Llama 2</a> <span class="source-note">— 开源模型也能做</span></li>
+</ul></div>
+
+<div class="footer-cta"><p>下一课: <a href="0006-data-project-management.html">Lesson 6: 数据项目管理 →</a></p></div>
+
+<script>
+function cq(id,btn,a){
+  var fb=document.getElementById(id+'-fb');
+  document.querySelectorAll('#'+id+' .quiz-option').forEach(o=>o.classList.remove('selected-correct','selected-wrong'));
+  if(id==='q1'){
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！先 Prompt 后微调。</strong> AWS 明确指出：先用精心设计的 Prompt 驱动基础模型，快速迭代。只有 Prompt 方法无法达到准确率要求时才考虑微调——因为微调需要大量标注数据。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 微调需要大量 Text2SQL 标注数据，启动成本高。',C:'❌ 从头训练成本极高且没必要——现有 LLM 已经很强。',D:'❌ 规则引擎无法理解语义变化，维护成本高。'}[a];}
+  }else{
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！Schema + Few-shot 示例。</strong> Schema 告诉 LLM 有什么表和字段，Few-shot 示例告诉 LLM 期望的 SQL 风格和复杂度。两者缺一不可。来源：AWS 最佳实践。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 业务背景太长占 Token，不如 Schema 直接有效。',C:'❌ LLM 不需要你告诉它自己是什么。',D:'❌ 历史查询可能有错，不如精选 2-3 个好示例。'}[a];}
+  }
+}
+</script>
+</body>
+</html>
