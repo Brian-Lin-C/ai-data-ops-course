@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 3: Python+AI辅助分析 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav"><a href="../README.md">← 首页</a> | 第3/7课 | <span style="color:#6ec6d8">43%</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:43%"></div></div>
+
+<h1>🐍 Lesson 3: Python + AI辅助分析</h1>
+<p style="color:#b0b0c0">来源: LlamaIndex PandasQueryEngine, Addy Osmani's LLM Workflow, Wes McKinney (pandas 创始人), AWS Text2SQL</p>
+
+<blockquote>💡 <strong>核心洞察</strong>：2025 年以后的数据分析师不是在「写代码」，而是在「指挥 AI 写代码」。但这不代表你可以不懂 pandas——你得能审查 AI 写的代码对不对。</blockquote>
+
+<h2>1. 分析师的核心 Python 三件套</h2>
+<table>
+  <tr><th>库</th><th>核心用法</th><th>面试考什么</th></tr>
+  <tr><td><code>pandas</code></td><td>groupby/merge/pivot/apply/window</td><td>多表合并 + 分组聚合 + 时间序列</td></tr>
+  <tr><td><code>matplotlib/seaborn</code></td><td>折线图、柱状图、热力图、双Y轴</td><td>能独立出图，讲清图表选择逻辑</td></tr>
+  <tr><td><code>requests</code></td><td>调 API、拉数据、发 webhook</td><td>数据获取自动化</td></tr>
+</table>
+
+<pre><code># 数据分析师最常用的 5 个 pandas 操作
+import pandas as pd
+df = pd.read_csv('sales.csv')
+
+# 1. 分组聚合
+df.groupby('category').agg({'amount': ['sum','mean','count']})
+
+# 2. 多表合并
+pd.merge(orders, users, on='user_id', how='left')
+
+# 3. 透视表
+df.pivot_table(values='amount', index='month', columns='channel', aggfunc='sum')
+
+# 4. 窗口函数（pandas 版）
+df['rolling_7d'] = df.groupby('user_id')['amount'].transform(lambda x: x.rolling(7).mean())
+
+# 5. 时间重采样
+df.set_index('date').resample('W')['amount'].sum()</code></pre>
+
+<h2>2. AI 辅助分析 — 新范式</h2>
+<p>来源：<strong>Wes McKinney</strong>（pandas 创始人，2026 年播客）：「Python 是为人类设计的。AI 刚刚改变了一切。」</p>
+
+<h3>三种 AI 辅助模式</h3>
+<div class="card">
+  <p><strong>① AI 写，人审查</strong> — 适合标准 ETL、简单可视化。你用自然语言描述需求，AI 生成代码，你检查逻辑正确性。</p>
+  <p><strong>② 人写框架，AI 填细节</strong> — 适合复杂分析。你搭好分析框架和关键逻辑，AI 补完具体实现。</p>
+  <p><strong>③ NL2SQL / NL2Pandas</strong> — 适合快速探索。用自然语言直接查询数据：<em>"上月各渠道 GMV 环比变化"</em> → AI 生成 SQL 或 pandas 代码。</p>
+</div>
+
+<h3>LlamaIndex PandasQueryEngine（来源：LlamaIndex 官方文档）</h3>
+<pre><code># 自然语言直接查 DataFrame
+from llama_index.experimental.query_engine import PandasQueryEngine
+
+query_engine = PandasQueryEngine(df=df)
+response = query_engine.query(
+    "各品类上月销售额排名，以及环比增长最快的品类"
+)
+print(response)</code></pre>
+<div class="highlight"><p>⚠️ <strong>AI 辅助分析的铁律</strong>：永远验证 AI 生成的代码——跑一遍、看结果、用业务逻辑判断。AI 不知道你的数据有没有缺失值、列名对不对。</p></div>
+
+<h2>3. 完整分析流程模板</h2>
+<pre><code># 标准数据分析工作流
+# Step 1: 数据加载 + 初步探索
+df = pd.read_csv('data.csv')
+print(df.info(), df.describe(), df.isnull().sum())
+
+# Step 2: 数据清洗（可让 AI 辅助）
+df['date'] = pd.to_datetime(df['date'])
+df = df.dropna(subset=['amount'])
+
+# Step 3: 特征工程
+df['month'] = df['date'].dt.month
+df['is_weekend'] = df['date'].dt.weekday >= 5
+
+# Step 4: 分组分析
+result = df.groupby(['month','channel']).agg({'amount':'sum','user_id':'nunique'})
+
+# Step 5: 可视化
+import matplotlib.pyplot as plt
+result['amount'].unstack().plot(kind='bar', stacked=True)
+plt.title('Monthly GMV by Channel')
+plt.savefig('gmv_analysis.png')</code></pre>
+
+<h2>🧪 测验</h2>
+<div class="quiz" id="q1"><h3>Q1: AI 辅助分析</h3><p class="question">AI 生成的 pandas 代码跑通了但输出结果看起来不对，你应该？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q1',this,'A')">A. 直接改提示词让 AI 重新生成</button>
+<button class="quiz-option" onclick="cq('q1',this,'B')">B. 逐行审查代码逻辑，检查中间结果</button>
+<button class="quiz-option" onclick="cq('q1',this,'C')">C. 换另一个 AI 模型试试</button>
+<button class="quiz-option" onclick="cq('q1',this,'D')">D. 接受结果，可能是数据本身的问题</button></div>
+<div class="quiz-feedback" id="q1-fb"></div></div>
+
+<div class="quiz" id="q2"><h3>Q2: pandas 操作</h3><p class="question">计算「每个用户最近 7 天消费额的滚动平均值」，用哪个函数？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q2',this,'A')">A. groupby + mean()</button>
+<button class="quiz-option" onclick="cq('q2',this,'B')">B. pivot_table</button>
+<button class="quiz-option" onclick="cq('q2',this,'C')">C. groupby + rolling + mean</button>
+<button class="quiz-option" onclick="cq('q2',this,'D')">D. merge + cumsum</button></div>
+<div class="quiz-feedback" id="q2-fb"></div></div>
+
+<h2>📌 关键收获</h2>
+<table class="takeaways">
+<tr><td>AI 辅助新范式</td><td>AI 写代码+人审查，而不是人写代码。但你得能读懂 pandas 才能审查</td></tr>
+<tr><td>三大模式</td><td>AI 全写→人写框架 AI 填→NL2SQL 直接查。选哪个看场景复杂度</td></tr>
+<tr><td>铁律</td><td>永远验证 AI 代码——跑一遍、看中间结果、用业务逻辑判断</td></tr>
+<tr><td>面试准备</td><td>能独立用 pandas 完成完整分析流程：加载→清洗→聚合→可视化→结论</td></tr>
+</table>
+
+<div class="ext-reading"><h3>📚 延伸阅读</h3><ul>
+<li><a href="https://developers.llamaindex.ai/python/examples/query_engine/pandas_query_engine/" target="_blank">LlamaIndex PandasQueryEngine</a> <span class="source-note">— 自然语言查 DataFrame</span></li>
+<li><a href="https://medium.com/@addyosmani/my-llm-coding-workflow-going-into-2026-52fe1681325e" target="_blank">Addy Osmani: My LLM Coding Workflow 2026</a> <span class="source-note">— Google 工程师的 AI 工作流</span></li>
+<li><a href="https://wesmckinney.com/transcripts/2026-02-10-rill-data-podcast" target="_blank">Wes McKinney: AI Changed Everything</a> <span class="source-note">— pandas 创始人的视角</span></li>
+<li><a href="https://arxiv.org/html/2506.11781v1" target="_blank">LLM as Stateful AI Code Assistant (arXiv 2025)</a></li>
+</ul></div>
+
+<div class="footer-cta"><p>下一课: <a href="0004-bi-dashboard.html">Lesson 4: BI可视化实战 →</a></p></div>
+
+<script>
+function cq(id,btn,a){
+  var fb=document.getElementById(id+'-fb');
+  document.querySelectorAll('#'+id+' .quiz-option').forEach(o=>o.classList.remove('selected-correct','selected-wrong'));
+  if(id==='q1'){
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！逐行审查代码逻辑。</strong> AI 不知道你的数据结构、缺失值、业务规则。加 print() 看中间结果才是正道。换模型/换提示词可能得到类似但不正确的结果。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 换提示词治标不治本，AI 可能生成另一个错误版本。',C:'❌ 模型不是问题所在，问题是你没验证逻辑。',D:'❌ 永远不要盲信 AI 输出——这是数据分析师的基本素养。'}[a];}
+  }else{
+    if(a==='C'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！groupby + rolling + mean。</strong> 先按 user_id 分组，再对每组做 7 天滚动窗口，最后取均值。这是 pandas 中做移动平均的标准模式。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ mean() 是全局均值，不是滚动窗口。',B:'❌ pivot_table 是透视表，不计算滚动值。',D:'❌ cumsum 是累计求和，不是滚动平均。'}[a];}
+  }
+}
+</script>
+</body>
+</html>
