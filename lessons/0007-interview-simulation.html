@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 7: 面试模拟 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav"><a href="../README.md">← 首页</a> | 第7/7课 | <span style="color:#4ecca3">100% 🎉</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+
+<h1>🎤 Lesson 7: 面试模拟 — AI数据运营策略岗</h1>
+<p style="color:#b0b0c0">来源: Airbnb DA Interview Guide 2026, OpenAI DA Interview Guide, DataVetaa Top 50 SQL Qs, 行业面经汇总</p>
+
+<blockquote>💡 <strong>核心洞察</strong>：这个岗位的面试有 4 类题——SQL 实战、案例分析、大模型认知、项目管理。每类题的答题框架和踩坑点都不同。</blockquote>
+
+<h2>1. 面试结构与权重</h2>
+<table>
+  <tr><th>轮次</th><th>考察内容</th><th>权重</th><th>典型时长</th></tr>
+  <tr><td>1. SQL 笔试/白板</td><td>窗口函数、多表JOIN、业务场景</td><td>30%</td><td>30-45min</td></tr>
+  <tr><td>2. 案例分析</td><td>异动分析、指标体系、业务判断</td><td>30%</td><td>30-45min</td></tr>
+  <tr><td>3. 大模型认知</td><td>对 LLM+数据 的理解、实践经验</td><td>20%</td><td>20-30min</td></tr>
+  <tr><td>4. 项目 & 沟通</td><td>项目管理、跨部门协作、方法论</td><td>20%</td><td>20-30min</td></tr>
+</table>
+
+<!-- ====== SQL ====== -->
+<h2>2. SQL 题 — 三道必练</h2>
+
+<div class="card"><h3>① 窗口函数：每个品类销售额 Top 3 商品</h3>
+<pre><code>SELECT category, product_name, total_sales
+FROM (
+  SELECT category, product_name, 
+    SUM(amount) AS total_sales,
+    ROW_NUMBER() OVER (PARTITION BY category ORDER BY SUM(amount) DESC) AS rn
+  FROM orders
+  WHERE dt >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+  GROUP BY category, product_name
+) t
+WHERE rn <= 3;</code></pre></div>
+
+<div class="card"><h3>② 留存计算：次日/7日/30日留存</h3>
+<pre><code>WITH first AS (
+  SELECT user_id, MIN(DATE(login_time)) AS first_dt
+  FROM login GROUP BY user_id
+)
+SELECT first_dt,
+  COUNT(DISTINCT f.user_id) AS new_users,
+  ROUND(COUNT(DISTINCT CASE WHEN DATEDIFF(l.login_time,f.first_dt)=1 THEN f.user_id END)*100.0/COUNT(DISTINCT f.user_id),2) AS d1,
+  ROUND(COUNT(DISTINCT CASE WHEN DATEDIFF(l.login_time,f.first_dt)=6 THEN f.user_id END)*100.0/COUNT(DISTINCT f.user_id),2) AS d7,
+  ROUND(COUNT(DISTINCT CASE WHEN DATEDIFF(l.login_time,f.first_dt)=29 THEN f.user_id END)*100.0/COUNT(DISTINCT f.user_id),2) AS d30
+FROM first f LEFT JOIN login l ON f.user_id=l.user_id
+GROUP BY first_dt;</code></pre></div>
+
+<div class="card"><h3>③ 连续登录：连续登录 ≥3 天的用户</h3>
+<pre><code>WITH t AS (
+  SELECT DISTINCT user_id, DATE(login_time) AS dt FROM login
+),
+t2 AS (
+  SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY dt) AS rn
+  FROM t
+)
+SELECT DISTINCT user_id
+FROM t2
+GROUP BY user_id, DATE_SUB(dt, INTERVAL rn DAY)
+HAVING COUNT(*) >= 3;</code></pre></div>
+
+<!-- ====== CASE ====== -->
+<h2>3. 案例分析题 — 标准答题框架</h2>
+
+<div class="highlight">
+  <p><strong>题型</strong>：「某天 DAU 下降了 15%，你会怎么排查？」（来源：Airbnb/OpenAI 面试指南）</p>
+  <p style="margin-top:0.8rem"><strong>答题框架（STAR 变体 — DAIR）</strong>：</p>
+  <p><strong>D</strong>efine — 先确认口径：是不是数据延迟？统计口径变了？去年同期大促造成的基数效应？</p>
+  <p><strong>A</strong>nalyze — 拆维度下钻：渠道→地域→新老用户→设备→功能模块。哪个维度异常？</p>
+  <p><strong>I</strong>dentify — 定位根因：结合业务事件（竞品活动/功能上线/服务器问题），给出置信度判断</p>
+  <p><strong>R</strong>ecommend — 给出建议：短期修复方案 + 长期监控机制。量化预估影响</p>
+</div>
+
+<h3>OpenAI 数据分析岗真实面试题（来源：DataFord Interview Guide）</h3>
+<div class="card">
+  <p><strong>「工单量在计费变更后飙升了 25%。你的排查思路是什么？」</strong></p>
+  <p style="margin-top:0.6rem">标准回答：① 确认是否计费变更导致（时间对齐）→ ② 拆工单类型：是新用户不会用还是老用户投诉？→ ③ 区分正常增长和异常增长（看历史波动范围）→ ④ 如果确认是计费变更导致，建议增加引导流程或临时客服扩容</p>
+</div>
+
+<!-- ====== AI ====== -->
+<h2>4. 大模型认知题 — 最关键的差异化</h2>
+
+<div class="highlight">
+  <p><strong>面试官</strong>：「你对大模型在数据分析中的应用有什么理解？」</p>
+  <p style="margin-top:0.5rem"><strong>你的回答</strong>：「我认为大模型在数据分析有三个成熟的应用场景：第一是 <strong>NL2SQL</strong>——让业务人员用自然语言查数据，AWS 和 Google 都有成熟的实践方案，核心是 Prompt Engineering + Schema 上下文。第二是<strong>自动分析报告</strong>——把数据摘要喂给 LLM，让它生成结构化的分析报告初稿，分析师做审核和深化。第三是<strong>智能数据清洗</strong>——LLM 能识别异常值模式和不一致格式，生成 pandas 清洗代码。我自己做过一个小 demo，用 DeepSeek API 实现了自然语言查订单数据的功能。」</p>
+</div>
+
+<!-- ====== PM ====== -->
+<h2>5. 项目管理题</h2>
+
+<div class="highlight">
+  <p><strong>面试官</strong>：「你主导过一个数据项目吗？怎么确保它不烂尾？」</p>
+  <p style="margin-top:0.5rem"><strong>回答要点</strong>：</p>
+  <p>① <strong>立项明确</strong>——目标、范围、成功标准写在一页纸上，干系人签字确认</p>
+  <p>② <strong>里程碑驱动</strong>——拆 3-5 个关键节点，每个节点有交付物和评审</p>
+  <p>③ <strong>风险前置</strong>——数据项目的 Top 3 风险永远是：数据不可得、口径不一致、需求变更</p>
+  <p>④ <strong>收益量化</strong>——项目结束必须有数字：「这个看板让异常响应从 T+1 降到 T+0，每天节省 1.5 小时查数时间」</p>
+</div>
+
+<!-- ====== GENERAL TIPS ====== -->
+<h2>6. 面试通用原则</h2>
+<table class="takeaways">
+  <tr><td>结构化</td><td>所有答案用框架回答。不说「我觉得」，说「我先确认口径→然后拆维度→最后给建议」</td></tr>
+  <tr><td>量化</td><td>任何「我做了 X」后面必须跟数据。多少时间？多少人？什么结果？</td></tr>
+  <tr><td>主动扩展</td><td>回答完基础问题后，主动带出你的差异化技能（"我还用 LLM 做过类似的自动化..."）</td></tr>
+  <tr><td>反问环节</td><td>别问「公司福利怎么样」。问「团队目前数据建设最大的挑战是什么？」「AI 在数据工作中的应用到了什么阶段？」</td></tr>
+</table>
+
+<h2>📌 课后行动清单</h2>
+<div class="card">
+  <p>✅ 牛客网 SQL 实战：完成中等难度全部题</p>
+  <p>✅ 用 FineBI 做一个真实数据集的看板（超市销售/电商数据）→ 截图入简历</p>
+  <p>✅ 做一个 NL2SQL demo：Python + DeepSeek API → 自然语言查本地 SQLite 数据库</p>
+  <p>✅ 准备 3 个 STAR 项目故事：数据分析项目 + 大模型应用 + 项目协调经验</p>
+  <p>✅ 每天投 5-10 家，关键词：数据分析、数据运营、AI数据、数据策略</p>
+</div>
+
+<h2>🧪 最终测验</h2>
+<div class="quiz" id="q1"><h3>Q1: 面试回答框架</h3><p class="question">面试官问「DAU 降了」，你应该用什么框架回答？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q1',this,'A')">A. 直接说数据可能有问题</button>
+<button class="quiz-option" onclick="cq('q1',this,'B')">B. DAIR: Define→Analyze→Identify→Recommend</button>
+<button class="quiz-option" onclick="cq('q1',this,'C')">C. 说需要更多时间分析</button>
+<button class="quiz-option" onclick="cq('q1',this,'D')">D. 先反问面试官是什么原因</button></div>
+<div class="quiz-feedback" id="q1-fb"></div></div>
+
+<div class="quiz" id="q2"><h3>Q2: 大模型认知题</h3><p class="question">面试官问「LLM 在数据分析中有什么用」，以下哪个回答最有竞争力？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q2',this,'A')">A. "可以替代数据分析师"</button>
+<button class="quiz-option" onclick="cq('q2',this,'B')">B. "我做过 NL2SQL 原型，理解 Prompt Engineering 和 Schema 设计"</button>
+<button class="quiz-option" onclick="cq('q2',this,'C')">C. "就是 ChatGPT 帮我写 SQL"</button>
+<button class="quiz-option" onclick="cq('q2',this,'D')">D. "大模型能把所有事情自动化"</button></div>
+<div class="quiz-feedback" id="q2-fb"></div></div>
+
+<div class="ext-reading"><h3>📚 延伸阅读</h3><ul>
+<li><a href="https://thedatamonk.com/airbnb-senior-data-analyst-interview-questions-2026/" target="_blank">Airbnb Senior DA Interview Guide 2026</a> <span class="source-note">— 四轮面试全流程</span></li>
+<li><a href="https://dataford.io/interview-guides/openai/data-analyst" target="_blank">OpenAI DA Interview Guide 2026</a> <span class="source-note">— 含真实业务案例题</span></li>
+<li><a href="https://www.datavetaa.com/top-50-sql-interview-questions-answers" target="_blank">DataVetaa: Top 50 SQL Interview Qs 2025</a> <span class="source-note">— 从基础到高级全收录</span></li>
+</ul></div>
+
+<div class="footer-cta">
+  <p style="font-size:1.2rem;color:#4ecca3">🎉 恭喜完成全部 7 课！</p>
+  <p>有问题随时问你的 AI 导师。祝面试顺利！</p>
+  <p style="margin-top:0.8rem;"><a href="0001-sql-production.html">← 回到第1课复习</a></p>
+</div>
+
+<script>
+function cq(id,btn,a){
+  var fb=document.getElementById(id+'-fb');
+  document.querySelectorAll('#'+id+' .quiz-option').forEach(o=>o.classList.remove('selected-correct','selected-wrong'));
+  if(id==='q1'){
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！DAIR 框架。</strong> 结构化回答是数据分析师面试的灵魂。Define 确认口径→Analyze 维度下钻→Identify 定位根因→Recommend 给出建议。不用框架回答=不及格。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 跳过分析直接给结论是面试大忌。',C:'❌ 逃避问题。面试官要的是你的思维过程，不是答案。',D:'❌ 反问不是不能用，但要在你展示完分析框架之后。'}[a];}
+  }else{
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！展示实战经验 + 技术深度。</strong> 不只说"我用过 ChatGPT"——说清楚 Prompt 设计、Schema 管理、RAG 增强、准确率优化。有 demo 比有观点强 10 倍。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ "替代"是过度承诺，面试官会立刻质疑你的理解深度。',C:'❌ 太浅了——ChatGPT 写 SQL 谁都会，你需要展示更深的理解。',D:'❌ 过度简化——面试官可能是做 AI 的，这句话会被追问到体无完肤。'}[a];}
+  }
+}
+</script>
+</body>
+</html>
