@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 4: BI可视化实战 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav"><a href="../README.md">← 首页</a> | 第4/7课 | <span style="color:#6ec6d8">57%</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:57%"></div></div>
+
+<h1>📊 Lesson 4: BI可视化实战 — 从数据到看板</h1>
+<p style="color:#b0b0c0">来源: FineBI 官方帮助文档 (help.fanruan.com), BI 行业最佳实践</p>
+
+<blockquote>💡 <strong>核心洞察</strong>：面试官说「你会用 BI 工具吗」——他不是问你能不能拖拽图表，而是问你能不能<strong>独立从原始数据搭建一个有业务洞察的监控看板</strong>。</blockquote>
+
+<h2>1. 选工具：FineBI vs Power BI vs Tableau</h2>
+<table>
+  <tr><th>工具</th><th>适合谁</th><th>广深JD命中率</th><th>价格</th></tr>
+  <tr><td><strong>FineBI</strong>（帆软）</td><td>国内企业/制造业/零售/国企</td><td>⭐⭐⭐ 最高</td><td>个人版免费</td></tr>
+  <tr><td>Power BI</td><td>外企/跨境电商/Microsoft 生态</td><td>⭐⭐</td><td>免费 + Pro ¥70/月</td></tr>
+  <tr><td>Tableau</td><td>外企/金融/咨询</td><td>⭐</td><td>$70/月</td></tr>
+</table>
+<div class="highlight"><p><strong>推荐 FineBI</strong>：广深国内企业 JD 中 FineBI/帆软出现频率远超 Power BI/Tableau。个人版免费，适合学习。</p></div>
+
+<h2>2. FineBI 快速入门（来源：FineBI 官方入门案例）</h2>
+<p>官方教程是 <strong>「连锁超市销售报告」</strong> 案例——1 小时学会 80% 高频功能。</p>
+
+<h3>核心分析流程</h3>
+<div class="card">
+  <p><strong>Step 1: 数据准备</strong> — 导入 Excel/CSV 或连接数据库 → 创建自助数据集</p>
+  <p><strong>Step 2: 数据加工</strong> — 过滤、分组汇总、新增公式列、左右合并</p>
+  <p><strong>Step 3: 可视化</strong> — 拖拽字段生成图表：柱状图（对比）、折线图（趋势）、饼图（占比）、地图（地域）</p>
+  <p><strong>Step 4: 仪表板</strong> — 组合多个图表 + 添加筛选器（日期、品类、区域）→ 形成完整看板</p>
+  <p><strong>Step 5: 分享</strong> — 发布到公共链接，或导出 PDF/图片写进简历</p>
+</div>
+
+<h3>典型业务看板结构</h3>
+<pre><code>┌─────────────────────────────────────────┐
+│  KPI 概览行: GMV | 订单数 | 客单价 | 转化率  │
+├────────────────┬────────────────────────┤
+│  趋势图 (折线)   │  品类排行 (柱状图)        │
+│  近30天GMV走势  │  Top10品类销售占比       │
+├────────────────┼────────────────────────┤
+│  渠道分布 (饼图) │  地域热力图 (地图)        │
+│  各渠道GMV占比   │  各省份销售额分布        │
+├────────────────┴────────────────────────┤
+│  明细表: 支持日期/品类/区域筛选             │
+└─────────────────────────────────────────┘</code></pre>
+
+<h2>3. 面试看板项目 — 如何写进简历</h2>
+<div class="highlight">
+  <p><strong>简历写法</strong>（来源：真实项目经验模拟）：</p>
+  <p style="margin-top:0.5rem">「使用 FineBI 搭建<strong>连锁零售业务监控看板</strong>，包含 4 大模块（GMV 趋势、品类排行、渠道分布、地域分析），支持日期和区域动态筛选。通过同比环比分析发现 Q3 华东区 GMV 下降 12%，定位原因为某品类缺货导致。」</p>
+</div>
+
+<h2>🧪 测验</h2>
+<div class="quiz" id="q1"><h3>Q1: BI 工具选择</h3><p class="question">你面试一家深圳的制造业公司，JD 要求「熟悉 BI 工具」，你应该优先学哪个？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q1',this,'A')">A. Tableau</button>
+<button class="quiz-option" onclick="cq('q1',this,'B')">B. Power BI</button>
+<button class="quiz-option" onclick="cq('q1',this,'C')">C. FineBI / 帆软</button>
+<button class="quiz-option" onclick="cq('q1',this,'D')">D. Google Data Studio</button></div>
+<div class="quiz-feedback" id="q1-fb"></div></div>
+
+<div class="quiz" id="q2"><h3>Q2: 看板设计</h3><p class="question">一个业务监控看板，左上角最应该放什么？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q2',this,'A')">A. 详细的明细数据表</button>
+<button class="quiz-option" onclick="cq('q2',this,'B')">B. 核心 KPI 概览卡片</button>
+<button class="quiz-option" onclick="cq('q2',this,'C')">C. 公司 Logo</button>
+<button class="quiz-option" onclick="cq('q2',this,'D')">D. 使用说明文字</button></div>
+<div class="quiz-feedback" id="q2-fb"></div></div>
+
+<h2>📌 关键收获</h2>
+<table class="takeaways">
+<tr><td>工具选择</td><td>广深 → FineBI（帆软）国内企业 JD 最高频。不要随大流学 Tableau——国内企业不用它</td></tr>
+<tr><td>看板结构</td><td>KPI 概览→趋势→排行→分布→明细。从宏观到微观，符合人的阅读习惯</td></tr>
+<tr><td>简历项目</td><td>做一个真实数据集看板（如超市销售/电商数据），截图放简历附件</td></tr>
+<tr><td>面试回答</td><td>不只说「我会用 XX 工具」，说「我用它搭建过什么看板，发现了什么业务问题」</td></tr>
+</table>
+
+<div class="ext-reading"><h3>📚 延伸阅读</h3><ul>
+<li><a href="https://help.fanruan.com/finebi/doc-view-1727.html" target="_blank">FineBI 官方入门案例：连锁超市销售报告</a> <span class="source-note">— 1h 学会 80% 功能</span></li>
+<li><a href="https://www.finebi.com/" target="_blank">FineBI 官网下载</a> <span class="source-note">— 个人版免费</span></li>
+<li><a href="https://www.fanruan.com/en/finebi" target="_blank">FineBI English Site</a> <span class="source-note">— 英文产品介绍</span></li>
+</ul></div>
+
+<div class="footer-cta"><p>下一课: <a href="0005-llm-data-automation.html">Lesson 5: 大模型赋能数据工作 →</a></p></div>
+
+<script>
+function cq(id,btn,a){
+  var fb=document.getElementById(id+'-fb');
+  document.querySelectorAll('#'+id+' .quiz-option').forEach(o=>o.classList.remove('selected-correct','selected-wrong'));
+  if(id==='q1'){
+    if(a==='C'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！FineBI（帆软）。</strong> 深圳制造业、国内零售/国企的 BI 工具以帆软系为主。懂 FineBI 在这些行业是直接加分项，Tableau 在这些场景几乎没有存在感。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ Tableau 在国内制造业/国企用得很少，主要是外企和金融。',B:'❌ Power BI 在跨境电商和微软生态有市场，但制造业还是 FineBI 为主。',D:'❌ Data Studio 在国内企业几乎不用。'}[a];}
+  }else{
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！核心 KPI 概览卡片。</strong> 看板设计遵循「总→分」原则：先给结论（KPI 概览），再给拆解（趋势/排行/分布），最后给明细。左上角是视线第一落点。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 明细表是最后看的，放左上角会淹没核心指标。',C:'❌ Logo 占用黄金位置，对数据分析没有价值。',D:'❌ 好的看板无需说明文字——设计本身就该自解释。'}[a];}
+  }
+}
+</script>
+</body>
+</html>
