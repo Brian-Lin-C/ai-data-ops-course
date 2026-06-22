@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1: SQL从学术到生产 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="../README.md">← 课程首页</a> &nbsp;|&nbsp;
+  第1课 / 7课 &nbsp;|&nbsp;
+  <span style="color:#6ec6d8">进度 14%</span>
+</div>
+<div class="progress-bar"><div class="progress-fill" style="width:14%"></div></div>
+
+<h1>📊 Lesson 1: SQL — 从学术到生产</h1>
+<p style="color:#b0b0c0; font-size:1.05rem;">学校里写 SELECT * FROM 够用了，工作中面试官要的是窗口函数、多表 JOIN、CTE 和 Hive 差异。</p>
+
+<blockquote>
+  💡 <strong>核心洞察</strong>：SQL 是数据分析岗的「普通话」—— 不会 SQL，你连话都说不了。JD 100% 要求。这一课不是从零教 SQL，而是帮你跨越「学校够用 → 面试能写 → 生产能跑」的三个台阶。
+</blockquote>
+
+<!-- ============ SECTION 1: Window Functions ============ -->
+<h2>1. 窗口函数 — 面试必杀技</h2>
+
+<p>学术 SQL 用 <code>GROUP BY</code> 聚合就够了，但生产环境中你需要保留每一行明细的同时做计算——这就是窗口函数。</p>
+
+<h3>四大金刚</h3>
+
+<table>
+  <tr><th>函数</th><th>作用</th><th>典型场景</th></tr>
+  <tr><td><code>ROW_NUMBER()</code></td><td>每行唯一序号（1,2,3...）</td><td>去重取最新一条</td></tr>
+  <tr><td><code>RANK()</code></td><td>排名，并列跳号（1,2,2,4...）</td><td>销售额排名</td></tr>
+  <tr><td><code>DENSE_RANK()</code></td><td>排名，并列不跳号（1,2,2,3...）</td><td>连续排名</td></tr>
+  <tr><td><code>LAG() / LEAD()</code></td><td>取前一行 / 后一行</td><td>环比计算、连续判断</td></tr>
+</table>
+
+<h3>实战例题 ①：每个用户最近一笔订单</h3>
+<pre><code>-- 面试高频题：取每个用户的最新订单
+SELECT user_id, order_id, amount, order_time
+FROM (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY order_time DESC) AS rn
+  FROM orders
+) t
+WHERE rn = 1;</code></pre>
+
+<h3>实战例题 ②：计算次日留存率</h3>
+<pre><code>-- 数据分析师必会：次日留存
+WITH first_day AS (
+  SELECT user_id, MIN(DATE(login_time)) AS first_date
+  FROM user_login
+  GROUP BY user_id
+)
+SELECT 
+  f.first_date,
+  COUNT(DISTINCT f.user_id) AS new_users,
+  COUNT(DISTINCT l.user_id) AS day1_retained,
+  ROUND(COUNT(DISTINCT l.user_id) * 100.0 / COUNT(DISTINCT f.user_id), 2) AS retention_pct
+FROM first_day f
+LEFT JOIN user_login l 
+  ON f.user_id = l.user_id 
+  AND DATE(l.login_time) = DATE_ADD(f.first_date, INTERVAL 1 DAY)
+GROUP BY f.first_date
+ORDER BY f.first_date;</code></pre>
+
+<!-- ============ SECTION 2: JOINs ============ -->
+<h2>2. 多表 JOIN — 数据血缘的核心</h2>
+
+<p>生产环境的数据分散在几十张表里，JOIN 是连接它们的桥梁。</p>
+
+<table>
+  <tr><th>JOIN 类型</th><th>结果</th><th>使用场景</th></tr>
+  <tr><td><code>INNER JOIN</code></td><td>两表都有匹配才保留</td><td>核心业务关联（订单×用户）</td></tr>
+  <tr><td><code>LEFT JOIN</code></td><td>左表全部保留，右表无匹配为 NULL</td><td>主表兜底（所有用户×订单）</td></tr>
+  <tr><td><code>RIGHT JOIN</code></td><td>右表全部保留</td><td>较少用，可用 LEFT 替代</td></tr>
+  <tr><td><code>FULL OUTER JOIN</code></td><td>两边都保留</td><td>对账、全量对比</td></tr>
+  <tr><td><code>SELF JOIN</code></td><td>表自己 JOIN 自己</td><td>层级关系、连续判断</td></tr>
+</table>
+
+<h3>面试易错点：LEFT JOIN 后 WHERE 条件放哪里？</h3>
+<pre><code>-- ❌ 错误：WHERE 过滤了 LEFT JOIN 的 NULL 行，退化成 INNER JOIN
+SELECT u.name, o.amount
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE o.amount > 100;  -- NULL 被过滤掉了！
+
+-- ✅ 正确：条件放在 ON 里
+SELECT u.name, o.amount
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id AND o.amount > 100;
+-- 保留了没有订单的用户（amount 为 NULL）</code></pre>
+
+<!-- ============ SECTION 3: CTE ============ -->
+<h2>3. CTE（WITH 子句） — 可读性的分水岭</h2>
+
+<p>见过嵌套 4 层的子查询吗？CTE 就是解药。学术 SQL 很少用，但生产代码里到处都是。</p>
+
+<pre><code>-- ❌ 难以阅读的嵌套子查询
+SELECT ...
+FROM (
+  SELECT ...
+  FROM (
+    SELECT ...
+    FROM orders
+  ) a
+) b;
+
+-- ✅ 用 CTE 改写 —— 清晰可读
+WITH 
+  user_orders AS (
+    SELECT user_id, COUNT(*) AS order_cnt
+    FROM orders
+    GROUP BY user_id
+  ),
+  high_value AS (
+    SELECT * FROM user_orders WHERE order_cnt >= 5
+  )
+SELECT u.name, h.order_cnt
+FROM users u
+JOIN high_value h ON u.id = h.user_id;</code></pre>
+
+<!-- ============ SECTION 4: Hive SQL ============ -->
+<h2>4. Hive SQL — 互联网公司的标配</h2>
+
+<p>JD 上写「SQL」其实 70% 是 Hive SQL。互联网公司的数据在 Hadoop/Hive 上，不是 MySQL。</p>
+
+<h3>核心差异速查</h3>
+
+<table class="takeaways">
+  <tr><td>分区表</td><td><code>PARTITIONED BY (dt STRING)</code>，查询必须带 <code>WHERE dt = '2025-06-01'</code> 否则全表扫描</td></tr>
+  <tr><td>collect_list</td><td>聚合为数组：<code>collect_list(product_name)</code>，MySQL 没有</td></tr>
+  <tr><td>lateral view explode</td><td>炸开数组：<code>LATERAL VIEW EXPLODE(tags) t AS tag</code></td></tr>
+  <tr><td>等值 JOIN 限制</td><td>只支持 <code>=</code> 的 JOIN 条件，不支持 <code>&gt; &lt; &lt;&gt;</code>（需要放 WHERE）</td></tr>
+  <tr><td>INSERT 不同</td><td>Hive 是批量追加，不是逐行插入</td></tr>
+</table>
+
+<pre><code>-- Hive 典型写法：分区查询 + collect_list
+SELECT 
+  user_id,
+  collect_list(order_id) AS order_ids,
+  COUNT(*) AS order_cnt
+FROM dwd_order_info
+WHERE dt = '2025-06-22'  -- 必须带分区！
+GROUP BY user_id;</code></pre>
+
+<!-- ============ QUIZ ============ -->
+<h2>🧪 测验：你能写出生产级 SQL 吗？</h2>
+
+<div class="quiz" id="q1">
+  <h3>Q1: 窗口函数辨析</h3>
+  <p class="question">成绩表 scores(name, score)，分数为 [90,85,85,80,80,75]。用 <code>DENSE_RANK()</code> 排名，分数 80 的排名是？</p>
+  <div class="quiz-options">
+    <button class="quiz-option" onclick="checkQ1(this, 'A')">A. 第4名</button>
+    <button class="quiz-option" onclick="checkQ1(this, 'B')">B. 第3名</button>
+    <button class="quiz-option" onclick="checkQ1(this, 'C')">C. 第2名</button>
+    <button class="quiz-option" onclick="checkQ1(this, 'D')">D. 第5名</button>
+  </div>
+  <div class="quiz-feedback" id="q1-feedback"></div>
+</div>
+
+<div class="quiz" id="q2">
+  <h3>Q2: 真实业务场景</h3>
+  <p class="question">用户表 users(id, name)，订单表 orders(id, user_id, amount)。要查出「所有用户及其总消费金额（没消费的显示 0）」，应该用什么 JOIN？</p>
+  <div class="quiz-options">
+    <button class="quiz-option" onclick="checkQ2(this, 'A')">A. INNER JOIN</button>
+    <button class="quiz-option" onclick="checkQ2(this, 'B')">B. LEFT JOIN + COALESCE</button>
+    <button class="quiz-option" onclick="checkQ2(this, 'C')">C. RIGHT JOIN</button>
+    <button class="quiz-option" onclick="checkQ2(this, 'D')">D. FULL OUTER JOIN</button>
+  </div>
+  <div class="quiz-feedback" id="q2-feedback"></div>
+</div>
+
+<div class="quiz" id="q3">
+  <h3>Q3: Hive 分区陷阱</h3>
+  <p class="question">Hive 表按 dt 分区，以下哪个查询会导致全表扫描？</p>
+  <div class="quiz-options">
+    <button class="quiz-option" onclick="checkQ3(this, 'A')">A. SELECT * FROM t WHERE dt = '2025-06-01'</button>
+    <button class="quiz-option" onclick="checkQ3(this, 'B')">B. SELECT * FROM t WHERE dt >= '2025-06-01'</button>
+    <button class="quiz-option" onclick="checkQ3(this, 'C')">C. SELECT * FROM t WHERE amount > 100</button>
+    <button class="quiz-option" onclick="checkQ3(this, 'D')">D. SELECT * FROM t WHERE dt IN ('2025-06-01','2025-06-02')</button>
+  </div>
+  <div class="quiz-feedback" id="q3-feedback"></div>
+</div>
+
+<!-- ============ TAKEAWAYS ============ -->
+<h2>📌 关键收获</h2>
+
+<table class="takeaways">
+  <tr><td>窗口函数</td><td>ROW_NUMBER 去重取最新，DENSE_RANK 连续排名，LAG/LEAD 做环比——面试必考</td></tr>
+  <tr><td>JOIN 条件位置</td><td>LEFT JOIN 的过滤条件放 ON 里，放 WHERE 里会退化成 INNER JOIN</td></tr>
+  <tr><td>CTE</td><td>WITH 子句让 SQL 可读性提升一个数量级，面试和生产都必须用</td></tr>
+  <tr><td>Hive 差异</td><td>分区查询必须带 WHERE dt=，否则全表扫描；collect_list + lateral view 是 Hive 独家</td></tr>
+  <tr><td>刷题路线</td><td>牛客网 SQL 实战 → LeetCode Database → 自己造业务场景练</td></tr>
+</table>
+
+<!-- ============ INTERVIEW SIM ============ -->
+<h2>🎤 模拟面试回答</h2>
+
+<div class="highlight">
+  <p><strong>面试官：</strong>「你平时写 SQL 多吗？用什么数据库？」</p>
+  <p style="margin-top:0.8rem;"><strong>你应该回答：</strong></p>
+  <p>「我日常使用 MySQL 做数据提取和分析，也熟悉 Hive SQL 的分区查询和 collect_list 等函数。最近在牛客网上刷完了 SQL 实战模块，窗口函数和多表 JOIN 都比较熟练。比如计算次日留存率，我会用 CTE + LEFT JOIN + DATE_ADD 来写。」</p>
+  <p style="color:#f0c040; margin-top:0.8rem;">💡 要点：不说「学过」，说「刷过题+写过真实查询」；主动带出具体技术点。</p>
+</div>
+
+<!-- ============ EXTENSION READING ============ -->
+<div class="ext-reading">
+  <h3>📚 延伸阅读 & 练习</h3>
+  <ul>
+    <li>
+      <a href="https://www.nowcoder.com/exam/oj?tab=SQL%E7%AF%87" target="_blank" rel="noopener">牛客网 SQL 实战</a>
+      <span class="source-note">— 数据分析师必刷，从简单到困难分梯度</span>
+    </li>
+    <li>
+      <a href="https://leetcode.cn/problemset/database/" target="_blank" rel="noopener">LeetCode 数据库题库</a>
+      <span class="source-note">— 英文题居多，大厂面试题源</span>
+    </li>
+    <li>
+      <a href="https://sqlzoo.net/" target="_blank" rel="noopener">SQLZoo</a>
+      <span class="source-note">— 交互式 SQL 教程，适合快速过基础</span>
+    </li>
+    <li>
+      <a href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual" target="_blank" rel="noopener">Hive SQL 官方语言手册</a>
+      <span class="source-note">— 遇到 Hive 语法问题查官方 Wiki</span>
+    </li>
+    <li>
+      <a href="https://zhuanlan.zhihu.com/p/356790801" target="_blank" rel="noopener">知乎：万字 Hive 入门指南</a>
+      <span class="source-note">— 中文详解 Hive 核心概念与实战</span>
+    </li>
+  </ul>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<div class="footer-cta">
+  <p>📌 有问题？直接问你的 AI 导师。下一课：<a href="0002-business-metrics.html">Lesson 2: 业务指标体系 — 从北极星指标到异动归因 →</a></p>
+  <p style="font-size:0.85rem; margin-top:0.5rem;">课程：AI数据运营策略岗求职准备 · 第1/7课</p>
+</div>
+
+<!-- ============ QUIZ SCRIPTS ============ -->
+<script>
+function checkQ1(btn, answer) {
+  var fb = document.getElementById('q1-feedback');
+  var all = document.querySelectorAll('#q1 .quiz-option');
+  all.forEach(function(o){ o.classList.remove('selected-correct','selected-wrong'); });
+  
+  if (answer === 'B') {
+    btn.classList.add('selected-correct');
+    fb.className = 'quiz-feedback correct show';
+    fb.innerHTML = '✅ <strong>正确！第3名。</strong> 排名序列：90→第1，85(并列)→第2，80(并列)→第3，75→第4。DENSE_RANK() 并列不跳号，所以两个80都是第3名。如果是 RANK()，两个85是第2名，两个80是第4名（跳号了）。';
+  } else {
+    btn.classList.add('selected-wrong');
+    fb.className = 'quiz-feedback wrong show';
+    fb.innerHTML = '❌ 不对。用 DENSE_RANK()：90→1, 85(两人并列)→2, <strong>80(两人并列)→3</strong>, 75→4。关键字「并列不跳号」——两个85是第2，紧接着两个80就是第3，不会跳过。';
+  }
+}
+
+function checkQ2(btn, answer) {
+  var fb = document.getElementById('q2-feedback');
+  var all = document.querySelectorAll('#q2 .quiz-option');
+  all.forEach(function(o){ o.classList.remove('selected-correct','selected-wrong'); });
+  
+  if (answer === 'B') {
+    btn.classList.add('selected-correct');
+    fb.className = 'quiz-feedback correct show';
+    fb.innerHTML = '✅ <strong>正确！LEFT JOIN + COALESCE(SUM(amount), 0)</strong>。users LEFT JOIN orders 保留所有用户，没消费的用户 orders 匹配为 NULL，用 COALESCE 把 NULL 转为 0。这是数据分析师最常用的模式。';
+  } else {
+    btn.classList.add('selected-wrong');
+    fb.className = 'quiz-feedback wrong show';
+    var hints = {
+      'A': '❌ INNER JOIN 会丢掉没有订单的用户——只返回有消费记录的人。',
+      'C': '❌ RIGHT JOIN 保留所有订单但可能丢掉没有订单的用户（取决于哪张表在右）。',
+      'D': '❌ FULL OUTER JOIN 保留两边，但这里我们只需要「所有用户」——LEFT JOIN 就够了。'
+    };
+    fb.innerHTML = hints[answer];
+  }
+}
+
+function checkQ3(btn, answer) {
+  var fb = document.getElementById('q3-feedback');
+  var all = document.querySelectorAll('#q3 .quiz-option');
+  all.forEach(function(o){ o.classList.remove('selected-correct','selected-wrong'); });
+  
+  if (answer === 'C') {
+    btn.classList.add('selected-correct');
+    fb.className = 'quiz-feedback correct show';
+    fb.innerHTML = '✅ <strong>正确！WHERE amount > 100</strong> 没有用到分区字段 dt，Hive 无法做分区裁剪，只能扫描所有分区的全部数据。在生产环境这是大忌——大表全表扫描可能跑几小时。';
+  } else {
+    btn.classList.add('selected-wrong');
+    fb.className = 'quiz-feedback wrong show';
+    fb.innerHTML = '❌ 不对。选项 A、B、D 都带 dt 条件，Hive 可以做 <strong>分区裁剪</strong>，只扫描匹配的分区目录。只有 C 没有任何分区过滤条件，触发了 <strong>全表扫描</strong>。面试官看到你写不带分区的 Hive 查询会直接扣分。';
+  }
+}
+</script>
+
+</body>
+</html>
