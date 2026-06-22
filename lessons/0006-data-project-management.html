@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 6: 数据项目管理 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav"><a href="../README.md">← 首页</a> | 第6/7课 | <span style="color:#6ec6d8">86%</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:86%"></div></div>
+
+<h1>📋 Lesson 6: 数据项目管理 — 从立项到收益刻画</h1>
+<p style="color:#b0b0c0">来源: BixTech Agile for Data & BI Teams, PMI DS/AI Project Management Playbook, Atlassian Agile Guide</p>
+
+<blockquote>💡 <strong>核心洞察</strong>：数据项目和软件开发项目不一样——数据有隐藏依赖、探索不确定性、数据质量问题。你不需要考 PMP，但你需要知道怎么让一个数据提效项目不烂尾。</blockquote>
+
+<h2>1. 数据项目的特殊性（来源：BixTech 实战指南）</h2>
+<p>为什么传统 Scrum 在数据团队经常翻车？BixTech 总结了 5 个核心差异：</p>
+
+<table>
+  <tr><th>挑战</th><th>软件开发</th><th>数据/BI 项目</th></tr>
+  <tr><td>依赖</td><td>清晰的 API 和模块边界</td><td><strong>隐藏依赖</strong>：数据源系统、权限审批、上游 schema 变更</td></tr>
+  <tr><td>需求</td><td>明确的用户故事</td><td><strong>探索型</strong>：从问题出发（"为什么 GMV 降了？"），不是需求</td></tr>
+  <tr><td>数据质量</td><td>输入可控</td><td><strong>不可控</strong>：缺失值、重复、不一致定义——前 20% 时间花在数据探查</td></tr>
+  <tr><td>交付物</td><td>可运行的功能模块</td><td><strong>可审查的增量</strong>：一个经验证的指标定义、一个清洗好的数据集</td></tr>
+  <tr><td>干系人</td><td>明确的产品经理</td><td><strong>模糊</strong>："我要一个看板" 不是完整的问题描述</td></tr>
+</table>
+
+<h2>2. 数据项目的 Scrum 适配（来源：BixTech）</h2>
+
+<h3>数据版「完成定义」(Definition of Done)</h3>
+<div class="card">
+  <p>✅ 数据通过约定层可访问（数仓/语义层）</p>
+  <p>✅ 数据变换逻辑已版本控制</p>
+  <p>✅ 业务逻辑已文档化（指标定义、过滤条件、假设）</p>
+  <p>✅ 数据质量检查已设置（新鲜度、空值、重复）</p>
+  <p>✅ 查询和看板性能达标</p>
+  <p>✅ 利益相关方可审查增量成果</p>
+</div>
+
+<h3>Sprint 交付物（不一定是完整看板）</h3>
+<pre><code>可接受的 Sprint 交付物：
+├─ 一个经验证的指标定义（如"活跃客户"的业务口径）
+├─ 一个清洗好、文档化的数据集（可信的单点真值表）
+├─ 一个可用的看板切片（一个人群 × 一个决策 × 一组KPI）
+├─ 一条带测试和监控的自动化数据管道
+└─ 一份带洞察和建议的分析报告（不只是图表）</code></pre>
+
+<h2>3. 项目管理核心能力清单</h2>
+
+<table class="takeaways">
+  <tr><td>立项</td><td>写项目章程：目标、范围、成功标准、干系人。1 页纸。</td></tr>
+  <tr><td>里程碑</td><td>3-5 个关键节点 + 每个节点的交付物。不要超过 5 个。</td></tr>
+  <tr><td>风险预案</td><td>列出 Top 3 风险 + 应对措施。数据项目常见风险：数据不可得、口径不一致、干系人变更需求。</td></tr>
+  <tr><td>沟通机制</td><td>周报 + 里程碑评审。格式：本周进展 / 下周计划 / 阻塞项 / 需要决策的事项。</td></tr>
+  <tr><td>收益刻画</td><td>项目结束必须有量化收益。公式：节省人力 × 时间 × 单价，或收入增量 × 贡献度。</td></tr>
+</table>
+
+<h2>4. 面试回答模板</h2>
+<div class="highlight">
+  <p><strong>面试官</strong>：「你管理过跨部门项目吗？怎么推进的？」</p>
+  <p style="margin-top:0.5rem"><strong>回答模板</strong>：「我管理过一个数据看板项目。首先做了立项——明确了业务目标（实时监控GMV异常）、范围（覆盖3个业务线）和成功标准（异常发现时间从T+1降到T+0）。然后拆了4个里程碑：数据接入→指标定义→看板搭建→上线监控。每个里程碑有交付物和评审。最大的风险是各业务线对GMV口径不一致——我提前拉了对齐会，统一了退货和优惠券的处理逻辑。最终项目节省了每天1.5小时的人工查数时间，异常响应从24小时降到2小时。」</p>
+</div>
+
+<h2>🧪 测验</h2>
+<div class="quiz" id="q1"><h3>Q1: 数据项目特殊性</h3><p class="question">BixTech 指出，数据项目中「前 20% 工作可能占 80% 时间」，这 20% 通常是什么？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q1',this,'A')">A. 看板美化</button>
+<button class="quiz-option" onclick="cq('q1',this,'B')">B. 数据接入 + 数据探查</button>
+<button class="quiz-option" onclick="cq('q1',this,'C')">C. 需求文档撰写</button>
+<button class="quiz-option" onclick="cq('q1',this,'D')">D. 干系人汇报</button></div>
+<div class="quiz-feedback" id="q1-fb"></div></div>
+
+<div class="quiz" id="q2"><h3>Q2: Sprint 交付物</h3><p class="question">数据团队的 Sprint 结束时，以下哪个可以作为合格的交付物？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q2',this,'A')">A. "我研究了一下数据，看起来还行"</button>
+<button class="quiz-option" onclick="cq('q2',this,'B')">B. 一份经验证+文档化的「活跃客户」指标定义</button>
+<button class="quiz-option" onclick="cq('q2',this,'C')">C. 画了一半的看板原型</button>
+<button class="quiz-option" onclick="cq('q2',this,'D')">D. 和业务方开了两次会</button></div>
+<div class="quiz-feedback" id="q2-fb"></div></div>
+
+<h2>📌 关键收获</h2>
+<table class="takeaways">
+<tr><td>数据≠软件</td><td>数据项目有隐藏依赖、探索不确定性和数据质量问题。不能照搬软件 Scrum</td></tr>
+<tr><td>完成定义</td><td>数据项目的「Done」必须有数据质量检查 + 业务逻辑文档 + 可审查成果</td></tr>
+<tr><td>增量交付</td><td>不一定是完整看板——一个经验证的指标定义也是合格的 Sprint 产出</td></tr>
+<tr><td>收益刻画</td><td>项目结束时必须量化：省了多少时间 × 人力成本，或贡献了多少收入增量</td></tr>
+</table>
+
+<div class="ext-reading"><h3>📚 延伸阅读</h3><ul>
+<li><a href="https://bixtech.ai/agile-for-data-and-bi-teams-how-to-apply-scrum-to-analytics-projects-without-losing-your-mind/" target="_blank">BixTech: Agile for Data & BI Teams</a> <span class="source-note">— Sprint 模板 + 避坑指南</span></li>
+<li><a href="https://www.pmi.org/-/media/pmi/documents/public/pdf/kas/reports/pmi-nasscom-playbook_online_final.pdf" target="_blank">PMI Playbook: PM for DS/AI Projects</a> <span class="source-note">— PMI 官方数据科学项目管理指南</span></li>
+<li><a href="https://www.datascience-pm.com/agile-data-science/" target="_blank">Agile Data Science</a> <span class="source-note">— 敏捷方法论在数据领域的应用</span></li>
+<li><a href="https://www.atlassian.com/agile/project-management" target="_blank">Atlassian: Agile Project Management</a> <span class="source-note">— 敏捷基础概念</span></li>
+</ul></div>
+
+<div class="footer-cta"><p>最后一课: <a href="0007-interview-simulation.html">Lesson 7: 面试模拟 →</a></p></div>
+
+<script>
+function cq(id,btn,a){
+  var fb=document.getElementById(id+'-fb');
+  document.querySelectorAll('#'+id+' .quiz-option').forEach(o=>o.classList.remove('selected-correct','selected-wrong'));
+  if(id==='q1'){
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！数据接入 + 数据探查。</strong> BixTech 指出：数据项目的非线性特征——获取数据源权限、理解 schema、发现数据质量问题（缺失值/重复/不一致定义）往往占最大时间比重。不是分析本身慢，是数据就绪慢。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 美化是最后一步，通常很快。',C:'❌ 文档虽然重要但不是最大时间黑洞。',D:'❌ 汇报时间远少于数据准备。'}[a];}
+  }else{
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！经验证的指标定义。</strong> BixTech 指出数据团队 Sprint 交付物不一定是完整看板——一个已验证、文档化的指标口径（如"活跃客户"的业务定义+技术实现）也是合格的增量。关键是「可审查」和「产生价值」。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 口头描述不可审查、不可复用。',C:'❌ 未完成的工作不算交付。',D:'❌ 开会是手段不是结果——输出会议纪要+决策+下一步才是产出。'}[a];}
+  }
+}
+</script>
+</body>
+</html>
