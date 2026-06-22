@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 2: 业务指标体系 — AI数据运营策略课</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="nav"><a href="../README.md">← 首页</a> | 第2/7课 | <span style="color:#6ec6d8">29%</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:29%"></div></div>
+
+<h1>📐 Lesson 2: 业务指标体系 — 北极星、OSM、异动归因</h1>
+<p style="color:#b0b0c0">来源: Amplitude North Star Framework, Mixpanel, Product School, OMTM 方法论</p>
+
+<blockquote>💡 <strong>核心洞察</strong>：指标不是越多越好。一个业务只有一个北极星——找到它，拆解它，用它驱动所有决策。</blockquote>
+
+<h2>1. 北极星指标 (North Star Metric)</h2>
+<p>来自 Amplitude（全球最大产品分析平台）的定义：<strong>北极星指标是唯一能最好地捕捉客户从产品中获得价值的指标</strong>。它服务于三个目的：</p>
+<div class="card"><p>① 给组织<strong>清晰度和对齐</strong>——知道优化什么、可以妥协什么<br>② 向公司传达产品团队的<strong>影响和进展</strong><br>③ 让产品团队为<strong>结果负责</strong>，而不是为「交付了多少功能」负责</p></div>
+
+<h3>Amplitude 三大游戏分类（选择北极星前先判断你是哪个游戏）</h3>
+<table>
+  <tr><th>游戏类型</th><th>核心问题</th><th>典型北极星</th><th>代表公司</th></tr>
+  <tr><td><strong>注意力游戏</strong></td><td>用户愿意花多少时间？</td><td>DAU、日均使用时长</td><td>Facebook, Netflix, TikTok</td></tr>
+  <tr><td><strong>交易游戏</strong></td><td>用户完成多少交易？</td><td>GMV、下单用户数、完成订单数</td><td>Amazon, Uber, Airbnb</td></tr>
+  <tr><td><strong>生产力游戏</strong></td><td>用户多高效完成工作？</td><td>创建文档数、活跃项目数</td><td>Notion, Figma, Slack</td></tr>
+</table>
+
+<div class="highlight"><p><strong>Amplitude 真实案例</strong>：一家财富100强零售商的北极星是 <strong>「移动端完成的订单数」</strong>——不只是下单数，必须是<strong>已完成交付</strong>的，才能确保客户获得了完整价值。</p></div>
+
+<h3>好北极星的三个特征</h3>
+<table class="takeaways">
+  <tr><td>对齐客户价值</td><td>靠近用户的「Aha Moment」——注册量、PV 是虚荣指标，不是北极星</td></tr>
+  <tr><td>代表产品策略</td><td>别人读你的北极星就能理解你的战略方向</td></tr>
+  <tr><td>先行指标</td><td>能预测未来成功，不是滞后指标（月度收入是滞后指标）</td></tr>
+</table>
+
+<h2>2. 北极星输入树 (Input Metrics)</h2>
+<p>北极星只有一个，但它有 <strong>3-5 个输入指标</strong>（你团队能直接影响的因子）。</p>
+<pre><code>北极星: 周活跃订餐用户数
+│
+├─ 广度 (Breadth): 新用户获取量
+├─ 深度 (Depth):   人均下单频次
+├─ 频率 (Frequency): 周活跃天数
+└─ 效率 (Efficiency): 每单利润率</code></pre>
+
+<h2>3. 异动归因 — 面试必考题</h2>
+<p>JD 写的「识别业务异常波动」就是这道题。标准回答框架：</p>
+<div class="card">
+  <p><strong>Step 1: 确认口径</strong> — 数据延迟？统计口径变了？节假日效应？（去年同一天在做大促→高基数）</p>
+  <p><strong>Step 2: 拆维度</strong> — 渠道、地域、设备、新老用户——哪个维度降了？</p>
+  <p><strong>Step 3: 拆用户</strong> — 新用户少了？还是老用户流失？头部用户走了还是长尾萎缩？</p>
+  <p><strong>Step 4: 拆行为</strong> — 是打开率降了还是使用时长降了？某个功能挂了？</p>
+  <p><strong>Step 5: 外部归因</strong> — 竞品活动？市场事件？政策变化？</p>
+</div>
+
+<h2>🧪 测验</h2>
+<div class="quiz" id="q1"><h3>Q1: 北极星选择题</h3><p class="question">一个 SaaS 企业协作工具，以下哪个最适合做北极星？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q1',this,'A')">A. 注册用户总数</button>
+<button class="quiz-option" onclick="cq('q1',this,'B')">B. 周活跃团队数</button>
+<button class="quiz-option" onclick="cq('q1',this,'C')">C. 月度收入</button>
+<button class="quiz-option" onclick="cq('q1',this,'D')">D. NPS 评分</button></div>
+<div class="quiz-feedback" id="q1-fb"></div></div>
+
+<div class="quiz" id="q2"><h3>Q2: 异动排查第一步</h3><p class="question">GMV 同比降 15%，第一步该做什么？</p>
+<div class="quiz-options">
+<button class="quiz-option" onclick="cq('q2',this,'A')">A. 查哪个品类降了</button>
+<button class="quiz-option" onclick="cq('q2',this,'B')">B. 确认数据口径和基数效应</button>
+<button class="quiz-option" onclick="cq('q2',this,'C')">C. 立刻通知业务方</button>
+<button class="quiz-option" onclick="cq('q2',this,'D')">D. 建归因模型</button></div>
+<div class="quiz-feedback" id="q2-fb"></div></div>
+
+<h2>📌 关键收获</h2>
+<table class="takeaways">
+<tr><td>北极星</td><td>一个业务只有一个。来源：Amplitude Framework。DAU/注册量不是北极星——那是虚荣指标</td></tr>
+<tr><td>三大游戏</td><td>注意力(时间)→交易(次数)→生产力(效率)，先判断游戏再选指标</td></tr>
+<tr><td>输入树</td><td>广度×深度×频率×效率，3-5个因子拆解北极星</td></tr>
+<tr><td>异动五步</td><td>口径→维度→用户→行为→外部。面试标准答案</td></tr>
+</table>
+
+<div class="ext-reading"><h3>📚 延伸阅读</h3><ul>
+<li><a href="https://amplitude.com/blog/product-north-star-metric" target="_blank">Amplitude: Every Product Needs a North Star Metric</a> <span class="source-note">— 北极星框架权威来源</span></li>
+<li><a href="https://mixpanel.com/blog/north-star-metric/" target="_blank">Mixpanel: What is a North Star Metric?</a> <span class="source-note">— 来自另一家顶级分析公司</span></li>
+<li><a href="https://productschool.com/blog/analytics/north-star-metric" target="_blank">Product School: North Star Metric Benefits & Tips</a></li>
+<li><a href="https://www.focusedchaos.co/p/north-star-metric-one-metric-that-matters" target="_blank">OMTM vs NSM: Why You Need Both</a> <span class="source-note">— 两者互补关系</span></li>
+</ul></div>
+
+<div class="footer-cta"><p>下一课: <a href="0003-python-ai-analysis.html">Lesson 3: Python + AI辅助分析 →</a></p></div>
+
+<script>
+function cq(id,btn,a){
+  var fb=document.getElementById(id+'-fb');
+  document.querySelectorAll('#'+id+' .quiz-option').forEach(o=>o.classList.remove('selected-correct','selected-wrong'));
+  if(id==='q1'){
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！周活跃团队数。</strong> 注册量可刷，收入是滞后指标，NPS 是间接指标。协作工具的核心价值是「团队用它协作」——活跃团队数才是真正的价值信号。来源：Amplitude 强调北极星必须是先行指标且反映客户价值。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 注册总数是虚荣指标，不反映活跃使用。',C:'❌ 收入是滞后指标，不给你前瞻信号。',D:'❌ NPS 波动大且反馈周期长，不适合做日常北极星。'}[a];}
+  }else{
+    if(a==='B'){btn.classList.add('selected-correct');fb.className='quiz-feedback correct show';fb.innerHTML='✅ <strong>正确！先确认数据口径。</strong> 去年同一天可能在搞大促（高基数效应），同比降 15% 其实正常。也可能是 ETL 数据管道延迟。不确认口径就分析=白费功夫。';}
+    else{btn.classList.add('selected-wrong');fb.className='quiz-feedback wrong show';fb.innerHTML={A:'❌ 没确认口径就拆维度可能得出错误结论。',C:'❌ 没搞清楚原因就通知=散布恐慌。',D:'❌ 模型是最后手段，先做基础排查。'}[a];}
+  }
+}
+</script>
+</body>
+</html>
